@@ -2,6 +2,9 @@
 
 
 # Warmup : blurring faces
+
+It seems openCV is faster and as accurate as face_recognition. Both fail when the head is inclined
+
 ##  With openCV
 
 First install openCV: 
