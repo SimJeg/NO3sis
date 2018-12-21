@@ -8,7 +8,7 @@ get_frame = lambda : cv2.cvtColor(camera.read()[1], cv2.COLOR_BGR2RGB)
 initial_frame = get_frame()
 plot = plt.imshow(initial_frame)
 
-# For each new frame, fill detected faces with first frame 
+# For each new frame, blur detected faces
 get_face = cv2.CascadeClassifier('detector.xml').detectMultiScale
 while True:
     frame = get_frame()
