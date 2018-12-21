@@ -1,3 +1,43 @@
 # NO3sis
 
-To run a baseline face blurring using open-cv run ```python baseline.py```
+
+# Warmup : blurring faces
+##  With openCV
+
+First install openCV: 
+
+```bash
+pip install opencv-python
+```
+
+Then run :
+
+```bash
+python blurring_opencv.py
+```
+
+Press 'q' to quit
+## With face_recognition
+
+[face_recognition](https://github.com/ageitgey/face_recognition) is a widely used package. 
+To install it, you first need dlib :
+```bash
+git clone https://github.com/davisking/dlib.git
+cd ..
+python setup.py install
+```
+
+Now you can install face_recognition :
+
+```bash
+pip install face_recognition
+```
+
+And run
+
+```bash
+python blurring_face_recognition.py
+```
+
+Press 'h' for face recognition using HOG features, 'c' for CNN features (slower) and 'q' to quit
+
