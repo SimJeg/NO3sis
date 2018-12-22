@@ -13,7 +13,7 @@ First install openCV:
 pip install opencv-python
 ```
 
-Then run :
+Then to perform live blurring on your webcam :
 
 ```bash
 python blurring_opencv.py
@@ -39,8 +39,35 @@ pip install face_recognition
 And run
 
 ```bash
-python blurring_face_recognition.py
+python blurring_dlib.py
 ```
 
 Press 'h' for face recognition using HOG features, 'c' for CNN features (slower) and 'q' to quit
 
+
+
+# Faceswap
+
+We will use the facial landmarks detected by dlib to do faceswap. To see what landmarks are run :
+
+```bash
+python face_landmarks.py
+```
+
+We first implemented 2 options
+- faceswap with a fixed image (you need to provide a path to an image, Macron by default)
+```bash
+ python face_swap_fixed_image.py image_path
+ ``` 
+ 
+ - faceswap with faces detected on the webcam
+```bash
+ python faceswap.py
+ ``` 
+ 
+ Faceswap is done by :
+ - detecting faces 
+ - finding associated landmarks
+ - computing the homography between 2 faces using landmarks
+ - warping a face to the other using homography
+ - applying color normalization to the warped face
