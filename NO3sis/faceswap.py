@@ -1,55 +1,64 @@
-"""Faceswap between faces detected on webcam"""
+"""
+Faceswap between webcam and a fixed image
+
+Potential improvement : https://www.learnopencv.com/face-swap-using-opencv-c-python/
+Code : https://github.com/spmallick/learnopencv/blob/master/FaceSwap/faceSwap.py
+More info about models : https://github.com/davisking/dlib-models
+"""
 
 import cv2
 import numpy as np
 from face_recognition import face_landmarks
-from skimage.draw import polygon
-import sys
 
-
-def get_pts(landmarks, img):
-    """ Get points around the face"""
-    pts = np.vstack([
-        landmarks['chin'][::-1],
-        landmarks['left_eyebrow'],
-        landmarks['right_eyebrow'],
-    ])
-    pts[:, 0] = np.clip(pts[:, 0], 0, img.shape[1] - 1)
-    pts[:, 1] = np.clip(pts[:, 1], 0, img.shape[0] - 1)
-    pts = pts.reshape((-1, 1, 2))
+def get_hull(landmarcks, img):
+    pts = np.vstack(landmarks.values())[:27]
+    pts[:17] = pts[:17][::-1]
+    pts = np.clip(pts, (0, 0), (img.shape[1] - 1, img.shape[0] - 1))
     return pts
 
 
 video_capture = cv2.VideoCapture(0)
 
-# Loop = 180ms per iteration, 150ms just for _raw_face_locations (seems to use only 1 CPU). Move to GPU ?
+# Loop = 200ms per iteration, 160ms just for face_landmarks
 while True:
     # Get landmarks from new frame
     _, frame = video_capture.read()
+    h, w, _ = frame.shape
     frame_swap = np.copy(frame)
-    landmarks_list = face_landmarks(frame)
-    pts_list = [get_pts(landmarks, frame) for landmarks in landmarks_list]
 
+    landmarks_list = face_landmarks(frame)
     n_faces = len(landmarks_list)
 
     if n_faces > 1:
+
+        pts_list = [get_hull(landmarks, frame) for landmarks in landmarks_list]
+
         for i in range(n_faces):
-            # Find the homography face(i) > face(i-1) and replace face(i-1) by face(i)
-            h, _ = cv2.findHomography(pts_list[i], pts_list[i - 1])
-            frame_warped = cv2.warpPerspective(frame, h, frame.shape[:2][::-1])
-            rr, cc = polygon(pts_list[i - 1][..., 1], pts_list[i - 1][..., 0])
-            frame_swap[rr, cc] = frame_warped[rr, cc]
 
-            # Harmonize lors (a bit long)
-            mask = np.zeros(frame.shape, dtype='uint8')
-            mask[rr, cc] = 255
-            r = cv2.boundingRect(pts_list[i - 1])
-            center = ((r[0] + int(r[2] / 2), r[1] + int(r[3] / 2)))
-            tmp = cv2.seamlessClone(frame_swap, frame, mask, center, cv2.NORMAL_CLONE)
-            frame_swap[rr, cc] = tmp[rr, cc]
+            # Restrict the transformation to a small box centered on the face
+            j1, i1, w1, h1 = cv2.boundingRect(pts_list[i - 1])
+            j2, i2, w2, h2 = cv2.boundingRect(pts_list[i])
+            pts1_rect = pts_list[i - 1] - np.array([j1, i1])
+            pts2_rect = pts_list[i] - np.array([j2, i2])
 
-    cv2.imshow('Video', frame_swap)
-    if cv2.waitKey(1) == ord('q'):
-        break
+            face1 = frame_swap[i2:i2 + h2, j2:j2 + w2]
+            homography, _ = cv2.findHomography(pts1_rect, pts2_rect)
 
+            # Warp the source face
+            face1_warped = cv2.warpPerspective(face1, homography, (w2, h2))
+            # Fill face[i] with the warped face[i-1]
+            mask = np.zeros((h2, w2, 3), dtype=np.uint8)
+            cv2.fillConvexPoly(mask, pts2_rect, (1, 1, 1))
+
+            # Harmonize colors
+            face1_warped = cv2.seamlessClone(face1_warped, frame[i2:i2 + h2, j2:j2 + w2],
+                                             mask * 255, (w2 // 2, h2 // 2), cv2.NORMAL_CLONE)
+
+            frame_swap[i2:i2 + h2, j2:j2 + w2] = \
+                frame[i2:i2 + h2, j2:j2 + w2] * (1 - mask) + \
+                face1_warped * mask
+
+        cv2.imshow('Video', frame_swap)
+        if cv2.waitKey(1) == ord('q'):
+            break
 video_capture.release()

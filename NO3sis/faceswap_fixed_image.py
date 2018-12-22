@@ -23,7 +23,11 @@ def get_hull(landmarcks, img):
     pts = np.clip(pts, (0, 0), (img.shape[1] - 1, img.shape[0] - 1))
     return pts
 
+
 # detector = cv2.CascadeClassifier('detector.xml').detectMultiScale
+# loc = detector(frame, flags=cv2.CASCADE_SCALE_IMAGE)
+# loc = [(r[1], r[0], r[1] + r[2], r[0] + r[3]) for r in loc]
+# landmarks_list = face_landmarks(frame, face_locations=loc)
 
 # Get landmarks from source image
 source = cv2.imread(image_path)
@@ -35,7 +39,7 @@ pts1 = np.float32(pts1 - np.array([j1, i1]))
 
 video_capture = cv2.VideoCapture(0)
 
-# Loop = 180ms per iteration, 150ms just for _raw_face_locations (seems to use only 1 CPU). Move to GPU ?
+# Loop = 200ms per iteration, 160ms just for face_landmarks
 while True:
     # Get landmarks from new frame
     _, frame = video_capture.read()
@@ -44,28 +48,23 @@ while True:
 
     landmarks_list = face_landmarks(frame)
 
-    # loc = detector(frame, flags=cv2.CASCADE_SCALE_IMAGE)
-    # loc = [(r[1], r[0], r[1] + r[2], r[0] + r[3]) for r in loc]
-    # landmarks_list = face_landmarks(frame, face_locations=loc)
-
-    faces = []
     for landmarks in landmarks_list:
         pts2 = get_hull(landmarks, frame)
 
-        # Restrict the transformation to a small box centered on face[i-1]
+        # Restrict the transformation to a small box centered on the face
         j2, i2, w2, h2 = cv2.boundingRect(pts2)
         pts2_rect = pts2 - np.array([j2, i2])
         homography, _ = cv2.findHomography(pts1, pts2_rect)
 
-        # Warp the source image
+        # Warp the source face
         face1_warped = cv2.warpPerspective(face1, homography, (w2, h2))
         # Fill face[i] with the warped face[i-1]
         mask = np.zeros((h2, w2, 3), dtype=np.uint8)
         cv2.fillConvexPoly(mask, pts2_rect, (1, 1, 1))
 
-        # Harmonize colors (a bit long)
+        # Harmonize colors
         face1_warped = cv2.seamlessClone(face1_warped, frame[i2:i2 + h2, j2:j2 + w2],
-                                mask * 255, (w2 // 2, h2 // 2), cv2.NORMAL_CLONE)
+                                         mask * 255, (w2 // 2, h2 // 2), cv2.NORMAL_CLONE)
 
         frame_swap[i2:i2 + h2, j2:j2 + w2] = \
             frame[i2:i2 + h2, j2:j2 + w2] * (1 - mask) + \
@@ -74,5 +73,4 @@ while True:
     cv2.imshow('Video', frame_swap)
     if cv2.waitKey(1) == ord('q'):
         break
-
 video_capture.release()

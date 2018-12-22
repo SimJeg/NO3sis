@@ -1,7 +1,7 @@
 # NO3sis
 
 
-# Warmup : blurring faces
+# Chapter 1 : blurring faces
 
 It seems openCV is faster and as accurate as face_recognition. Both fail when the head is inclined
 
@@ -46,7 +46,7 @@ Press 'h' for face recognition using HOG features, 'c' for CNN features (slower)
 
 
 
-# Faceswap
+# Chapter 2 : face swapping
 
 We will use the facial landmarks detected by dlib to do faceswap. To see what landmarks are run :
 
@@ -55,12 +55,12 @@ python face_landmarks.py
 ```
 
 We first implemented 2 options
-- faceswap with a fixed image (you need to provide a path to an image, Macron by default)
+- faceswap with a fixed image 
 ```bash
  python face_swap_fixed_image.py image_path
  ``` 
  
- - faceswap with faces detected on the webcam
+ - faceswap with faces detected on the webcam (better with 2)
 ```bash
  python faceswap.py
  ``` 
