@@ -12,6 +12,8 @@ tri_list = np.load('triangle_list.npy')
 hull_list = np.load('hull_list.npy')
 
 
+
+
 # Loop = 180ms per iteration, 150ms just for _raw_face_locations (seems to use only 1 CPU). Move to GPU ?
 while True:
     # Get landmarks from new frame

@@ -14,8 +14,13 @@ pts = np.vstack(landmarks.values())
 pts = np.clip(pts, [0, 0], [w - 1, h - 1])
 
 # Get DelaunayTriangulation
+
+
+r = np.array([0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+              26, 25, 24, 19, 18, 17, 27, 30, 60, 66, 51, 63])
+
 subdiv = cv2.Subdiv2D((0, 0, w, h))
-[subdiv.insert(tuple(p)) for p in pts]
+[subdiv.insert(tuple(p)) for p in pts[r]]
 tri_list = subdiv.getTriangleList()
 
 
